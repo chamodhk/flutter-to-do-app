@@ -61,6 +61,10 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _deleteTask(int index) {
+    _box.deleteAt(index);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -93,6 +97,14 @@ class _MyHomePageState extends State<MyHomePage> {
                         : TextDecoration.none,
                   ),
                 ),
+                trailing: Tooltip(
+                  message: "Delete this task!",
+                  child: ElevatedButton(
+                    onPressed: () => _deleteTask(index),
+                    child: Icon(Icons.delete, color: Colors.red),
+                  ),
+                ),
+
                 onTap: () => _toggleDone(index),
                 subtitle: Text("Due: ${_formatDate(item["due"])}"),
               );
@@ -101,9 +113,12 @@ class _MyHomePageState extends State<MyHomePage> {
         },
       ),
 
-      floatingActionButton: FloatingActionButton(
-        onPressed: _navigateToAddTask,
-        child: const Icon(Icons.add),
+      floatingActionButton: Tooltip(
+        message: "Add a new task",
+        child: FloatingActionButton(
+          onPressed: _navigateToAddTask,
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }
