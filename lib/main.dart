@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'add_task_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -28,42 +29,24 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final TextEditingController _controller = TextEditingController();
   final List<Map<String, dynamic>> _items = [];
-  DateTime? _selectedDate;
 
-  void _handleSubmit() {
-    if (_controller.text.isEmpty) return;
+  void _navigateToAddTask() async {
+    final newTask = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const AddTaskScreen()),
+    );
 
-    setState(() {
-      _items.add({
-        "task": _controller.text,
-        "done": false,
-        'due': _selectedDate,
+    if (newTask != null) {
+      setState(() {
+        _items.add(newTask);
       });
-      _controller.clear();
-      _selectedDate = null;
-    });
+    }
   }
 
   String _formatDate(DateTime? date) {
     if (date == null) return "No due date selected";
     return "${date.day}/${date.month}/${date.year}";
-  }
-
-  void _pickDate() async {
-    DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate ?? DateTime.now(),
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2100),
-    );
-
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
   }
 
   void _toggleDone(int index) {
@@ -76,56 +59,31 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("Todo App")),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _controller,
-                    decoration: const InputDecoration(
-                      labelText: "Enter something",
-                      border: OutlineInputBorder(),
-                    ),
-                    onSubmitted: (value) => _handleSubmit(),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                TextButton(
-                  onPressed: _pickDate,
-                  child: Text(_formatDate(_selectedDate)),
-                ),
-              ],
+      body: ListView.builder(
+        itemCount: _items.length,
+        itemBuilder: (context, index) {
+          return ListTile(
+            leading: _items[index]["done"]
+                ? const Icon(Icons.check_circle_rounded)
+                : const Icon(Icons.check_circle_outlined),
+            title: Text(
+              _items[index]["task"],
+              style: TextStyle(
+                fontSize: 18,
+                decoration: _items[index]["done"]
+                    ? TextDecoration.lineThrough
+                    : TextDecoration.none,
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
-          ElevatedButton(onPressed: _handleSubmit, child: const Text("Submit")),
-          Expanded(
-            child: ListView.builder(
-              itemCount: _items.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  leading: _items[index]["done"]
-                      ? const Icon(Icons.check_circle_rounded)
-                      : const Icon(Icons.check_circle_outlined),
-                  title: Text(
-                    _items[index]["task"],
-                    style: TextStyle(
-                      fontSize: 18,
-                      decoration: _items[index]["done"]
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
-                    ),
-                  ),
-                  onTap: () => _toggleDone(index),
-                  subtitle: Text("Due: ${_formatDate(_items[index]["due"])}"),
-                );
-              },
-            ),
-          ),
-        ],
+            onTap: () => _toggleDone(index),
+            subtitle: Text("Due: ${_formatDate(_items[index]["due"])}"),
+          );
+        },
+      ),
+
+      floatingActionButton: FloatingActionButton(
+        onPressed: _navigateToAddTask,
+        child: const Icon(Icons.add),
       ),
     );
   }
