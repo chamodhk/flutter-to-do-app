@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'add_task_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Hive.initFlutter();
+  await Hive.openBox('todos');
   runApp(const MyApp());
 }
 
@@ -13,7 +17,8 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Todo App',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.orange),
+        // pageTransitionsTheme: const PageTransitionsTheme(builders: {Tar}),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
       ),
       home: const MyHomePage(title: 'todo app'),
     );
@@ -29,7 +34,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  final List<Map<String, dynamic>> _items = [];
+  final Box _box = Hive.box('todos');
 
   void _navigateToAddTask() async {
     final newTask = await Navigator.push(
@@ -38,9 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
 
     if (newTask != null) {
-      setState(() {
-        _items.add(newTask);
-      });
+      _box.add(newTask);
     }
   }
 
@@ -50,33 +53,50 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _toggleDone(int index) {
-    setState(() {
-      _items[index]["done"] = !_items[index]["done"];
+    var item = _box.getAt(index) as Map;
+    _box.putAt(index, {
+      "task": item["task"],
+      "done": !item["done"],
+      "due": item["due"],
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Todo App")),
-      body: ListView.builder(
-        itemCount: _items.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            leading: _items[index]["done"]
-                ? const Icon(Icons.check_circle_rounded)
-                : const Icon(Icons.check_circle_outlined),
-            title: Text(
-              _items[index]["task"],
-              style: TextStyle(
-                fontSize: 18,
-                decoration: _items[index]["done"]
-                    ? TextDecoration.lineThrough
-                    : TextDecoration.none,
-              ),
-            ),
-            onTap: () => _toggleDone(index),
-            subtitle: Text("Due: ${_formatDate(_items[index]["due"])}"),
+      appBar: AppBar(
+        title: const Text("Todo App"),
+        backgroundColor: Theme.of(context).primaryColor,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+      ),
+      body: ValueListenableBuilder(
+        valueListenable: _box.listenable(),
+        builder: (context, box, _) {
+          if (box.isEmpty) {
+            return const Center(child: Text("No tasks yet"));
+          }
+
+          return ListView.builder(
+            itemCount: box.length,
+            itemBuilder: (context, index) {
+              final item = box.getAt(index) as Map;
+              return ListTile(
+                leading: item["done"]
+                    ? const Icon(Icons.check_circle_rounded)
+                    : const Icon(Icons.check_circle_outlined),
+                title: Text(
+                  item["task"],
+                  style: TextStyle(
+                    fontSize: 18,
+                    decoration: item["done"]
+                        ? TextDecoration.lineThrough
+                        : TextDecoration.none,
+                  ),
+                ),
+                onTap: () => _toggleDone(index),
+                subtitle: Text("Due: ${_formatDate(item["due"])}"),
+              );
+            },
           );
         },
       ),
