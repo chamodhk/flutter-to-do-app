@@ -11,7 +11,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   final TextEditingController _controller = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
   final FocusNode _titleFocus = FocusNode();
-  DateTime? _selectedDate = null;
+  DateTime? _selectedDate;
 
   void _pickDate() async {
     DateTime? picked = await showDatePicker(
@@ -33,15 +33,18 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
 
     Navigator.pop(context, {
       "task": _controller.text,
+      "desc": _descriptionController.text,
       "due": _selectedDate,
       "done": false,
     });
   }
 
   void _reset() {
-    _controller.clear();
-    _descriptionController.clear();
-    _selectedDate = null;
+    setState(() {
+      _controller.clear();
+      _descriptionController.clear();
+      _selectedDate = null;
+    });
   }
 
   @override
@@ -66,6 +69,9 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
           children: [
             TextField(
               controller: _controller,
+              maxLines: null,
+              keyboardType: TextInputType.text,
+              maxLength: 100,
               focusNode: _titleFocus,
               decoration: const InputDecoration(
                 labelText: "Task Title",
@@ -75,22 +81,44 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
             const SizedBox(height: 16),
             TextField(
               controller: _descriptionController,
+              maxLines: null,
+              keyboardType: TextInputType.multiline,
               decoration: const InputDecoration(
                 labelText: "Task Description",
                 border: OutlineInputBorder(),
                 floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
             ),
-            SizedBox(
-              child: TextButton(
-                onPressed: _pickDate,
-                child: Text(
-                  _selectedDate == null
-                      ? "Pick due date"
-                      : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+            SizedBox(height: 10),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _pickDate,
+                  child: _selectedDate == null
+                      ? Icon(Icons.calendar_today)
+                      : Row(
+                          children: [
+                            Text(
+                              "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+                            ),
+                            SizedBox(width: 5),
+                            Icon(Icons.edit),
+                          ],
+                        ),
                 ),
-              ),
+              ],
             ),
+            // SizedBox(
+            //   child: TextButton(
+            //     onPressed: _pickDate,
+            //     child: _selectedDate == null
+            //         ? ElevatedButton(child: Icon(Icons.calendar_today))
+            //         : Text(
+            //             "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+            //           ),
+            //   ),
+            // ),
+            SizedBox(height: 20),
             Row(
               children: [
                 ElevatedButton(

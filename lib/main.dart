@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'add_task_screen.dart';
+import 'view_task_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,16 +39,17 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final Box _box = Hive.box('todos');
 
-  // void _navigateToAddTask() async {
-  //   final newTask = await Navigator.push(
-  //     context,
-  //     MaterialPageRoute(builder: (context) => const AddTaskScreen()),
-  //   );
+  void _navigateToShowTask(int index) async {
+    var task = Map<String, dynamic>.from(_box.getAt(index));
+    final newTask = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ViewTaskScreen(task: task)),
+    );
 
-  //   if (newTask != null) {
-  //     _box.add(newTask);
-  //   }
-  // }
+    if (newTask != null) {
+      _box.putAt(index, newTask);
+    }
+  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return "No due date selected";
@@ -58,6 +60,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var item = _box.getAt(index) as Map;
     _box.putAt(index, {
       "task": item["task"],
+      "desc": item["desc"],
       "done": !item["done"],
       "due": item["due"],
     });
@@ -88,7 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: const Text("Todo App"),
         ),
-        backgroundColor: Theme.of(context).primaryColor,
+        backgroundColor: Colors.blueAccent,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body: ValueListenableBuilder(
@@ -131,7 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
                               Icons.check_circle_rounded,
                               color: Colors.green,
                             )
-                          : const Icon(Icons.check_circle_outlined),
+                          : const Icon(Icons.pending_actions_outlined),
                       title: Text(
                         item["task"],
                         style: GoogleFonts.lato(
@@ -144,16 +147,6 @@ class _MyHomePageState extends State<MyHomePage> {
                               ? TextDecoration.lineThrough
                               : TextDecoration.none,
                         ),
-                        // TextStyle(
-                        //   fontFamily: "sans-serif",
-                        //   fontSize: 18,
-                        //   decoration: item["done"]
-                        //       ? TextDecoration.lineThrough
-                        //       : TextDecoration.none,
-                        //   fontWeight: item["done"]
-                        //       ? FontWeight.normal
-                        //       : FontWeight.bold,
-                        // ),
                       ),
 
                       // trailing: Tooltip(
@@ -163,7 +156,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       //     child: Icon(Icons.delete, color: Colors.red),
                       //   ),
                       // ),
-                      onTap: () => _toggleDone(index),
+                      onTap: () => _navigateToShowTask(index),
                       subtitle: Text("Due: ${_formatDate(item["due"])}"),
                     ),
                   ),
@@ -177,6 +170,7 @@ class _MyHomePageState extends State<MyHomePage> {
       floatingActionButton: Tooltip(
         message: "Add a new task",
         child: FloatingActionButton(
+          backgroundColor: Colors.lightBlueAccent,
           onPressed: () => _openAddTaskSheet(context),
           child: const Icon(Icons.add),
         ),
