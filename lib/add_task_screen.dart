@@ -9,7 +9,9 @@ class AddTaskScreen extends StatefulWidget {
 
 class _AddTaskScreenState extends State<AddTaskScreen> {
   final TextEditingController _controller = TextEditingController();
-  DateTime? _selectedDate;
+  final TextEditingController _descriptionController = TextEditingController();
+  final FocusNode _titleFocus = FocusNode();
+  DateTime? _selectedDate = null;
 
   void _pickDate() async {
     DateTime? picked = await showDatePicker(
@@ -27,7 +29,7 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
   }
 
   void _submit() {
-    if (_controller.text.isEmpty || _selectedDate == null) return;
+    if (_controller.text.isEmpty) return;
 
     Navigator.pop(context, {
       "task": _controller.text,
@@ -36,35 +38,74 @@ class _AddTaskScreenState extends State<AddTaskScreen> {
     });
   }
 
+  void _reset() {
+    _controller.clear();
+    _descriptionController.clear();
+    _selectedDate = null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _titleFocus.requestFocus();
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Add a new Task"),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+    return Padding(
+      padding: EdgeInsets.only(
+        left: 16,
+        right: 16,
+        top: 20,
+        bottom: MediaQuery.of(context).viewInsets.bottom + 16,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
+      child: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: _controller,
+              focusNode: _titleFocus,
               decoration: const InputDecoration(
-                labelText: "Task name",
+                labelText: "Task Title",
                 border: OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: _pickDate,
-              child: Text(
-                _selectedDate == null
-                    ? "Pick due date"
-                    : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+            TextField(
+              controller: _descriptionController,
+              decoration: const InputDecoration(
+                labelText: "Task Description",
+                border: OutlineInputBorder(),
+                floatingLabelBehavior: FloatingLabelBehavior.always,
               ),
             ),
-            ElevatedButton(onPressed: _submit, child: const Text("Add Task")),
+            SizedBox(
+              child: TextButton(
+                onPressed: _pickDate,
+                child: Text(
+                  _selectedDate == null
+                      ? "Pick due date"
+                      : "${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}",
+                ),
+              ),
+            ),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _submit,
+                  child: const Text("Add Task"),
+                ),
+                SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: _reset,
+                  child: Row(
+                    children: [const Text("Reset"), const Icon(Icons.refresh)],
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
