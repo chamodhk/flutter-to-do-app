@@ -40,6 +40,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final Box _box = Hive.box('todos');
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
+  bool _isSearching = false;
 
   void _navigateToShowTask(int index) async {
     var task = Map<String, dynamic>.from(_box.getAt(index));
@@ -89,33 +90,51 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 70,
-        title: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: const Text("Todo App"),
-        ),
+        title: _isSearching
+            ? Container(
+                height: kToolbarHeight,
+                alignment: Alignment.center,
+                child: TextField(
+                  controller: _searchController,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onPrimary,
+                  ),
+                  decoration: InputDecoration(
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    hintText: 'Search tasks..',
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    border: InputBorder.none,
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      _searchQuery = value.toLowerCase();
+                    });
+                  },
+                ),
+              )
+            : const Text("Todo App"),
+
         backgroundColor: Colors.blueAccent,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isSearching = !_isSearching;
+                if (!_isSearching) _searchController.clear();
+              });
+            },
+            icon: Icon(_isSearching ? Icons.close : Icons.search),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(12.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search tasks..',
-                prefixIcon: Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onChanged: (value) {
-                setState(() {
-                  _searchQuery = value.toLowerCase();
-                });
-              },
-            ),
-          ),
           Expanded(
             child: ValueListenableBuilder(
               valueListenable: _box.listenable(),
