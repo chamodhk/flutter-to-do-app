@@ -38,6 +38,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final Box _box = Hive.box('todos');
+  final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   void _navigateToShowTask(int index) async {
     var task = Map<String, dynamic>.from(_box.getAt(index));
@@ -94,77 +96,134 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Colors.blueAccent,
         foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
-      body: ValueListenableBuilder(
-        valueListenable: _box.listenable(),
-        builder: (context, box, _) {
-          if (box.isEmpty) {
-            return const Center(child: Text("No tasks yet"));
-          }
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search tasks..',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase();
+                });
+              },
+            ),
+          ),
+          Expanded(
+            child: ValueListenableBuilder(
+              valueListenable: _box.listenable(),
+              builder: (context, box, _) {
+                final allTasks = box.values
+                    .cast<Map>()
+                    .toList()
+                    .where((task) => task["done"] == false)
+                    .toList();
 
-          return SlidableAutoCloseBehavior(
-            child: ListView.builder(
-              itemCount: box.length,
-              itemBuilder: (context, index) {
-                final item = box.getAt(index) as Map;
-                return Slidable(
-                  key: Key(item["task"] + index.toString()),
-                  endActionPane: ActionPane(
-                    motion: const DrawerMotion(),
-                    children: [
-                      SlidableAction(
-                        onPressed: (context) {
-                          _deleteTask(index);
-                        },
-                        backgroundColor: Colors.red,
-                        foregroundColor: Colors.white,
-                        icon: Icons.delete,
-                        label: 'Delete',
-                      ),
-                    ],
-                  ),
-                  child: Container(
-                    height: 80,
-                    // margin: const EdgeInsets.symmetric(
-                    //   vertical: 6,
-                    //   horizontal: 4,
-                    // ),
-                    child: ListTile(
-                      leading: item["done"]
-                          ? const Icon(
-                              Icons.check_circle_rounded,
-                              color: Colors.green,
-                            )
-                          : const Icon(Icons.pending_actions_outlined),
-                      title: Text(
-                        item["task"],
-                        style: GoogleFonts.lato(
-                          fontSize: 16,
-                          fontWeight: item["done"]
-                              ? FontWeight.normal
-                              : FontWeight.bold,
+                final filteredTasks = _searchQuery.isEmpty
+                    ? allTasks
+                    : allTasks
+                          .where(
+                            (task) =>
+                                task['task'].toLowerCase().contains(
+                                  _searchQuery,
+                                ) ||
+                                task['desc'].toLowerCase().contains(
+                                  _searchQuery,
+                                ),
+                          )
+                          .toList();
 
-                          decoration: item["done"]
-                              ? TextDecoration.lineThrough
-                              : TextDecoration.none,
+                return SlidableAutoCloseBehavior(
+                  child: ListView.builder(
+                    itemCount: filteredTasks.length,
+                    itemBuilder: (context, index) {
+                      final item = filteredTasks[index];
+                      return Slidable(
+                        key: Key(item["task"] + index.toString()),
+
+                        startActionPane: ActionPane(
+                          extentRatio: 0.3,
+                          motion: DrawerMotion(),
+                          children: [
+                            SlidableAction(
+                              onPressed: (context) {
+                                _toggleDone(index);
+                              },
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              icon: Icons.done_all_rounded,
+                              label: "Mark as completed",
+                            ),
+                          ],
                         ),
-                      ),
+                        endActionPane: ActionPane(
+                          extentRatio: 0.2,
+                          motion: const DrawerMotion(),
+                          children: [
+                            SlidableAction(
+                              onPressed: (context) {
+                                _deleteTask(index);
+                              },
+                              backgroundColor: Colors.red,
+                              foregroundColor: Colors.white,
+                              icon: Icons.delete,
+                              label: 'Delete',
+                            ),
+                          ],
+                        ),
+                        child: Container(
+                          height: 80,
+                          // margin: const EdgeInsets.symmetric(
+                          //   vertical: 6,
+                          //   horizontal: 4,
+                          // ),
+                          child: ListTile(
+                            leading: item["done"]
+                                ? const Icon(
+                                    Icons.check_circle_rounded,
+                                    color: Colors.green,
+                                  )
+                                : const Icon(Icons.pending_actions_outlined),
+                            title: Text(
+                              item["task"],
+                              style: GoogleFonts.lato(
+                                fontSize: 16,
+                                fontWeight: item["done"]
+                                    ? FontWeight.normal
+                                    : FontWeight.bold,
 
-                      // trailing: Tooltip(
-                      //   message: "Delete this task!",
-                      //   child: ElevatedButton(
-                      //     onPressed: () => _deleteTask(index),
-                      //     child: Icon(Icons.delete, color: Colors.red),
-                      //   ),
-                      // ),
-                      onTap: () => _navigateToShowTask(index),
-                      subtitle: Text("Due: ${_formatDate(item["due"])}"),
-                    ),
+                                decoration: item["done"]
+                                    ? TextDecoration.lineThrough
+                                    : TextDecoration.none,
+                              ),
+                            ),
+
+                            // trailing: Tooltip(
+                            //   message: "Delete this task!",
+                            //   child: ElevatedButton(
+                            //     onPressed: () => _deleteTask(index),
+                            //     child: Icon(Icons.delete, color: Colors.red),
+                            //   ),
+                            // ),
+                            onTap: () => _navigateToShowTask(index),
+                            subtitle: Text("Due: ${_formatDate(item["due"])}"),
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
 
       floatingActionButton: Tooltip(
