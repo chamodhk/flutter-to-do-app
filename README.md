@@ -1,16 +1,12 @@
-# flutter_application_1
+# A to do app with flutter
 
-A new Flutter project.
+This is a simple To do app made with flutter. I made this just to have some hands on experience with flutter.
 
-## Getting Started
+# How to install
 
-This project is a starting point for a Flutter application.
+- Clone the repository
+- Open terminal in the directory of the repository
+- Run: flutter pub get
+- Run: flutter build apk --release
 
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Then you can find the release apk file inside build\app\outputs\flutter-apk\app-release.apk
